@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Group {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  members     Member[]
+  expenses    Expense[]
+  settlements Settlement[]
+}
+
+model Member {
+  id        String   @id @default(uuid())
+  name      String
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  
+  paidExpenses    Expense[]       @relation("PaidBy")
+  expenseShares   ExpenseShare[]
+  settlementsFrom Settlement[]    @relation("SettlementFrom")
+  settlementsTo   Settlement[]    @relation("SettlementTo")
+}
+
+model Expense {
+  id          String         @id @default(uuid())
+  description String
+  amount      Float
+  paidById    String
+  paidBy      Member         @relation("PaidBy", fields: [paidById], references: [id], onDelete: Cascade)
+  groupId     String
+  group       Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  splitType   String         @default("equal") // "equal" or "custom"
+  createdAt   DateTime       @default(now())
+  shares      ExpenseShare[]
+}
+
+model ExpenseShare {
+  id        String  @id @default(uuid())
+  expenseId String
+  expense   Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    Member  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  amount    Float
+
+  @@unique([expenseId, memberId])
+}
+
+model Settlement {
+  id        String   @id @default(uuid())
+  amount    Float
+  fromId    String
+  from      Member   @relation("SettlementFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  toId      String
+  to        Member   @relation("SettlementTo", fields: [toId], references: [id], onDelete: Cascade)
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
