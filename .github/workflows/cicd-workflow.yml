@@ -6,24 +6,24 @@ on:
 
 jobs:
   build:
-    runs-on: [ubuntu-latest]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout source
         uses: actions/checkout@v3
       - name: Login to docker hub
-        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }} 
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
       - name: Build docker image
-        run: docker build -t dannynguyen1188/happyshare-backend-app .
-      - name: Publish image to docker hub
-        run: docker push dannynguyen1188/happyshare-backend-app:latest
+        run: docker build -t dannynguyen1188/happyshare:latest .
+      - name: Push image to docker hub
+        run: docker push dannynguyen1188/happyshare:latest
         
   deploy:
     needs: build
     runs-on: [aws-ec2]
     steps:
       - name: Pull image from docker hub
-        run: docker pull dannynguyen1188/happyshare-backend-app:latest
+        run: docker pull dannynguyen1188/happyshare:latest
       - name: Delete old container
-        run: docker rm -f happyshare-backend-app-container
+        run: docker rm -f happyshare || true
       - name: Run docker container
-        run: docker run -d -p 5000:5000 --name nodejs-app-container dannynguyen1188/happyshare-backend-app
+        run: docker run -d -p 3000:3000 -p 3001:3001 --name happyshare dannynguyen1188/happyshare:latest
