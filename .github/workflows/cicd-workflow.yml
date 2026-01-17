@@ -25,5 +25,5 @@ jobs:
         run: docker pull dannynguyen1188/happyshare:latest
       - name: Delete old container
         run: docker rm -f happyshare || true
-      - name: Run docker container
+      - name: Run docker container 
         run: docker run -d -p 3000:3000 -p 3001:3001 --name happyshare dannynguyen1188/happyshare:latest
