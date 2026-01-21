@@ -77,6 +77,7 @@ export const expensesApi = {
     paidById: string;
     splitType?: 'equal' | 'custom';
     shares?: { memberId: string; amount: number }[];
+    participantIds?: string[];
   }) =>
     fetchApi<Expense>(`/groups/${groupId}/expenses`, {
       method: 'POST',
@@ -89,6 +90,7 @@ export const expensesApi = {
     paidById: string;
     splitType?: 'equal' | 'custom';
     shares?: { memberId: string; amount: number }[];
+    participantIds?: string[];
   }) =>
     fetchApi<Expense>(`/groups/${groupId}/expenses/${expenseId}`, {
       method: 'PUT',

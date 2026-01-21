@@ -28,7 +28,7 @@ router.get('/:groupId/expenses', async (req, res) => {
 router.post('/:groupId/expenses', async (req, res) => {
   try {
     const { groupId } = req.params;
-    const { description, amount, paidById, splitType, shares } = req.body;
+    const { description, amount, paidById, splitType, shares, participantIds } = req.body;
     
     if (!description || !amount || !paidById) {
       return res.status(400).json({ error: 'Description, amount, and paidById are required' });
@@ -50,9 +50,17 @@ router.post('/:groupId/expenses', async (req, res) => {
       // Custom split - use provided shares
       expenseShares = shares;
     } else {
-      // Equal split among all members
-      const shareAmount = amount / group.members.length;
-      expenseShares = group.members.map(member => ({
+      // Equal split - use participantIds if provided, otherwise all members
+      const participants = participantIds && participantIds.length > 0
+        ? group.members.filter(m => participantIds.includes(m.id))
+        : group.members;
+      
+      if (participants.length === 0) {
+        return res.status(400).json({ error: 'At least one participant is required' });
+      }
+      
+      const shareAmount = amount / participants.length;
+      expenseShares = participants.map(member => ({
         memberId: member.id,
         amount: shareAmount
       }));
@@ -88,7 +96,7 @@ router.post('/:groupId/expenses', async (req, res) => {
 router.put('/:groupId/expenses/:expenseId', async (req, res) => {
   try {
     const { expenseId } = req.params;
-    const { description, amount, paidById, splitType, shares } = req.body;
+    const { description, amount, paidById, splitType, shares, participantIds } = req.body;
     
     // Delete existing shares
     await prisma.expenseShare.deleteMany({
@@ -110,8 +118,17 @@ router.put('/:groupId/expenses/:expenseId', async (req, res) => {
     if (splitType === 'custom' && shares) {
       expenseShares = shares;
     } else {
-      const shareAmount = amount / expense.group.members.length;
-      expenseShares = expense.group.members.map(member => ({
+      // Equal split - use participantIds if provided, otherwise all members
+      const participants = participantIds && participantIds.length > 0
+        ? expense.group.members.filter(m => participantIds.includes(m.id))
+        : expense.group.members;
+      
+      if (participants.length === 0) {
+        return res.status(400).json({ error: 'At least one participant is required' });
+      }
+      
+      const shareAmount = amount / participants.length;
+      expenseShares = participants.map(member => ({
         memberId: member.id,
         amount: shareAmount
       }));

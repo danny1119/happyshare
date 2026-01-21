@@ -30,6 +30,7 @@ export default function GroupPage() {
   const [expenseDescription, setExpenseDescription] = useState('')
   const [expenseAmount, setExpenseAmount] = useState('')
   const [expensePaidBy, setExpensePaidBy] = useState('')
+  const [expenseParticipants, setExpenseParticipants] = useState<string[]>([])
 
   // Add settlement form
   const [showAddSettlement, setShowAddSettlement] = useState(false)
@@ -48,6 +49,12 @@ export default function GroupPage() {
       loadBalances()
     }
   }, [groupId, activeTab])
+
+  useEffect(() => {
+    if (showAddExpense && group) {
+      setExpenseParticipants(group.members.map(m => m.id))
+    }
+  }, [showAddExpense, group])
 
   async function loadGroup() {
     try {
@@ -108,12 +115,17 @@ export default function GroupPage() {
   async function handleAddExpense(e: React.FormEvent) {
     e.preventDefault()
     if (!expenseDescription.trim() || !expenseAmount || !expensePaidBy || !groupId) return
+    if (expenseParticipants.length === 0) {
+      alert('Please select at least one participant')
+      return
+    }
 
     try {
       const expense = await expensesApi.add(groupId, {
         description: expenseDescription.trim(),
         amount: parseFloat(expenseAmount),
-        paidById: expensePaidBy
+        paidById: expensePaidBy,
+        participantIds: expenseParticipants
       })
       setGroup(prev => prev ? {
         ...prev,
@@ -122,6 +134,7 @@ export default function GroupPage() {
       setExpenseDescription('')
       setExpenseAmount('')
       setExpensePaidBy('')
+      setExpenseParticipants([])
       setShowAddExpense(false)
     } catch (error) {
       console.error('Failed to add expense:', error)
@@ -364,6 +377,31 @@ export default function GroupPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label>Split between</Label>
+                    <div className="grid grid-cols-2 gap-2 p-3 border rounded-md">
+                      {group.members.map((member) => (
+                        <label key={member.id} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={expenseParticipants.includes(member.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setExpenseParticipants([...expenseParticipants, member.id])
+                              } else {
+                                setExpenseParticipants(expenseParticipants.filter(id => id !== member.id))
+                              }
+                            }}
+                            className="w-4 h-4 rounded border-gray-300"
+                          />
+                          <span className="text-sm">{member.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {expenseParticipants.length} of {group.members.length} members selected
+                    </p>
+                  </div>
                   <div className="flex gap-2">
                     <Button type="submit">Add Expense</Button>
                     <Button type="button" variant="outline" onClick={() => setShowAddExpense(false)}>
@@ -394,7 +432,7 @@ export default function GroupPage() {
                           Paid by {expense.paidBy.name} • {formatDate(expense.createdAt)}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Split equally among {expense.shares.length} members
+                          Split among: {expense.shares.map(s => s.member.name).join(', ')}
                         </p>
                       </div>
                       <div className="flex items-center gap-4">
