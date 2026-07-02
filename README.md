@@ -61,6 +61,15 @@ A web application to help groups of people split bills and track expenses easily
    ```
    The app will be running at http://localhost:3000
 
+## Build docker image
+
+# Rebuild the image (no cache to ensure fresh build)
+docker build --no-cache -t happyshare:latest .
+# Stop and remove old container
+docker rm -f happyshare
+# Run new container
+docker run -d -p 3000:3000 -p 3001:3001 --name happyshare happyshare:latest
+
 ## API Endpoints
 
 ### Groups
