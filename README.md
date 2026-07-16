@@ -104,7 +104,7 @@ docker run -d -p 3000:3000 -p 3001:3001 --name happyshare happyshare:latest
 2. **Add Expenses**: Select a group, go to Expenses tab, and add expenses with who paid
 3. **View Balances**: Check the Balances tab to see who owes whom
 4. **Settle Up**: Use suggested settlements or manually record payments
-add
+
 
 ## License
 
